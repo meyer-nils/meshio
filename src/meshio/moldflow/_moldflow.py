@@ -17,7 +17,7 @@ import os
 
 import numpy as np
 
-from .._helpers import register
+from .._helpers import register_format
 from .._mesh import CellBlock, Mesh
 
 pat_to_meshio_type = {
@@ -96,7 +96,7 @@ def read(
     return mesh
 
 
-def read_ele_buffer(f, mesh, element_gids, tensor_type):
+def read_ele_buffer(f, mesh, element_gids):
     """Read element based data file."""
     name = f.readline().replace(" ", "_").rstrip("\n")
     dimensions = f.readline().split()
@@ -135,7 +135,7 @@ def read_ele_buffer(f, mesh, element_gids, tensor_type):
     return mesh
 
 
-def read_xml_buffer(xml_filename, mesh, element_gids, point_gids, tensor_type):
+def read_xml_buffer(xml_filename, mesh, element_gids, point_gids):
     """Read element based data file."""
     import xml.etree.ElementTree as ET
 
@@ -210,7 +210,7 @@ def read_xml_buffer(xml_filename, mesh, element_gids, point_gids, tensor_type):
     return mesh
 
 
-def read_nod_buffer(f, mesh, point_gids, tensor_type):
+def read_nod_buffer(f, mesh, point_gids):
     """Read node based data file."""
     node_id_map = {}
     for line, id in enumerate(point_gids):
@@ -345,4 +345,4 @@ def write(filename, mesh):
         f.write("DUMMY")
 
 
-register("moldflow", [".pat"], read, {"moldflow": write})
+register_format("moldflow", [".pat"], read, {"moldflow": write})
