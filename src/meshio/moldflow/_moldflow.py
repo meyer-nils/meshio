@@ -75,13 +75,15 @@ def read(
         ele_filename = ele_filename or filename.replace(".pat", ".ele")
         if os.path.isfile(ele_filename):
             with open(ele_filename, "r") as f:
-                mesh = read_ele_buffer(f, mesh, element_gids)
+                mesh = read_ele_buffer(f, mesh, element_gids, autoremove)
 
     # if *.xml file is present: Add cell or node data
     for xml_filename in xml_filenames:
         xml_filename = xml_filename or filename.replace(".pat", ".xml")
         if os.path.isfile(xml_filename):
-            mesh = read_xml_buffer(xml_filename, mesh, element_gids, point_gids)
+            mesh = read_xml_buffer(
+                xml_filename, mesh, element_gids, point_gids, autoremove
+            )
 
     # if *.nod file is present: Add point data
     for nod_filename in nod_filenames:
@@ -96,7 +98,7 @@ def read(
     return mesh
 
 
-def read_ele_buffer(f, mesh, element_gids):
+def read_ele_buffer(f, mesh, element_gids, autoremove):
     """Read element based data file."""
     name = f.readline().replace(" ", "_").rstrip("\n")
     dimensions = f.readline().split()
@@ -115,6 +117,7 @@ def read_ele_buffer(f, mesh, element_gids):
             data[ID] = values
 
     mesh.cell_data[name] = []
+    nan_data = np.nan * np.ones_like(data[next(iter(data))])
     for i, cell_block in enumerate(mesh.cells):
         data_list = []
         elem_type = cell_block.type
@@ -123,7 +126,10 @@ def read_ele_buffer(f, mesh, element_gids):
             try:
                 data_list.append(data[gid])
             except KeyError:
-                del_pos.append(pos)
+                if autoremove:
+                    del_pos.append(pos)
+                else:
+                    data_list.append(nan_data)
         # delete cells with no data
         type_clean = mesh.cells[i].type
         data_clean = np.delete(mesh.cells[i].data, del_pos, axis=0)
@@ -135,7 +141,7 @@ def read_ele_buffer(f, mesh, element_gids):
     return mesh
 
 
-def read_xml_buffer(xml_filename, mesh, element_gids, point_gids):
+def read_xml_buffer(xml_filename, mesh, element_gids, point_gids, autoremove):
     """Read element based data file."""
     import xml.etree.ElementTree as ET
 
@@ -179,6 +185,7 @@ def read_xml_buffer(xml_filename, mesh, element_gids, point_gids):
 
         if "ELDT" in type:
             mesh.cell_data[name] = []
+            nan_data = np.nan * np.ones_like(data[next(iter(data))])
             for i, cell_block in enumerate(mesh.cells):
                 data_list = []
                 elem_type = cell_block.type
@@ -187,7 +194,10 @@ def read_xml_buffer(xml_filename, mesh, element_gids, point_gids):
                     try:
                         data_list.append(data[gid])
                     except KeyError:
-                        del_pos.append(pos)
+                        if autoremove:
+                            del_pos.append(pos)
+                        else:
+                            data_list.append(nan_data)
                 # delete cells with no data.
                 type_clean = mesh.cells[i].type
                 data_clean = np.delete(mesh.cells[i].data, del_pos, axis=0)
