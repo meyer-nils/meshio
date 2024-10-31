@@ -1,6 +1,7 @@
 """
 I/O for FLAC3D format.
 """
+
 from __future__ import annotations
 
 import re
@@ -162,6 +163,9 @@ def read_buffer(f, binary):
 
             if not line:
                 break
+
+            if line.strip() == "":
+                continue
 
             split = line.rstrip().split()
 
@@ -531,6 +535,7 @@ def _translate_zcells(points, cells):
     normal vectors). Reorder corner points according to sign of scalar triple
     products.
     """
+
     # See <https://stackoverflow.com/a/42386330/353337>
     def slicing_summing(a, b, c):
         c0 = b[:, 1] * c[:, 2] - b[:, 2] * c[:, 1]
